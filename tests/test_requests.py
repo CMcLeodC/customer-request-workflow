@@ -19,6 +19,7 @@ def test_create_customer_request():
     assert response.status_code == 201
     assert response.json()["urgency"] == "medium"
     assert response.json()["customer_id"] == payload["customer_id"]
+    assert response.json()["id"] == 1
 
 
 def test_invalid_email_in_create_customer_request():
