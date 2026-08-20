@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from app.schemas.customer_request import (
     CustomerRequestCreate,
     CustomerRequestRead,
@@ -26,4 +26,20 @@ def create_customer_request(
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
+    return db_request
+
+
+@app.get("/requests/{request_id}", response_model=CustomerRequestRead)
+def get_customer_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+):
+    db_request = db.get(CustomerRequest, request_id)
+
+    if db_request is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Customer request not found",
+        )
+
     return db_request
