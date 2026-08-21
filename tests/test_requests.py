@@ -20,6 +20,7 @@ def test_create_customer_request():
     assert response.json()["urgency"] == "medium"
     assert response.json()["customer_id"] == payload["customer_id"]
     assert response.json()["id"] == 1
+    assert response.json()["status"] == "new"
 
 
 def test_invalid_email_in_create_customer_request():

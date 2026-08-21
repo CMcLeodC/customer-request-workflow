@@ -2,6 +2,15 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+RequestStatus = Literal[
+    "new",
+    "reviewing",
+    "approved",
+    "in_progress",
+    "completed",
+    "rejected",
+]
+
 
 class CustomerRequestCreate(BaseModel):
     customer_id: str
@@ -15,3 +24,4 @@ class CustomerRequestRead(CustomerRequestCreate):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+    status: RequestStatus

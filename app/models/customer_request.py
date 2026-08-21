@@ -12,3 +12,9 @@ class CustomerRequest(Base):
     requester_email: Mapped[str] = mapped_column(String(255), nullable=False)
     request_text: Mapped[str] = mapped_column(Text, nullable=False)
     urgency: Mapped[str] = mapped_column(String(20), default="medium")
+
+    status: Mapped[str] = mapped_column(
+    String(20),
+    default="new",
+    nullable=False,
+    )
