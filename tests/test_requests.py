@@ -65,3 +65,34 @@ def test_get_customer_request_not_found():
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Customer request not found"}
+
+
+def test_list_customer_requests():
+    payload1 = {
+        "customer_id": "connor1234",
+        "requester_name": "connor_clements",
+        "requester_email": "connor@example.com",
+        "request_text": "I want to practice building APIs"
+        }
+
+    payload2 = {
+        "customer_id": "alex5678",
+        "requester_name": "alex_johnson",
+        "requester_email": "alex@example.com",
+        "request_text": "I need help with my order"
+        }
+
+    client.post("/requests", json=payload1)
+    client.post("/requests", json=payload2)
+
+    response = client.get("/requests")
+
+    assert response.status_code == 200
+    assert len(response.json()) == 2
+
+    customer_ids = {
+    item["customer_id"]
+    for item in response.json()
+    }
+
+    assert customer_ids == {"connor1234", "alex5678"}

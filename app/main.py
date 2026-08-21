@@ -6,6 +6,7 @@ from app.schemas.customer_request import (
 from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
 from app.models.customer_request import CustomerRequest
+from sqlalchemy import select
 
 Base.metadata.create_all(bind=engine)
 
@@ -43,3 +44,10 @@ def get_customer_request(
         )
 
     return db_request
+
+
+@app.get("/requests", response_model=list[CustomerRequestRead])
+def list_customer_requests(
+    db: Session = Depends(get_db),
+):
+    return db.scalars(select(CustomerRequest)).all()
