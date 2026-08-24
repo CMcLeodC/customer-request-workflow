@@ -25,3 +25,7 @@ class CustomerRequestRead(CustomerRequestCreate):
 
     model_config = ConfigDict(from_attributes=True)
     status: RequestStatus
+
+
+class CustomerRequestStatusUpdate(BaseModel):
+    status: RequestStatus

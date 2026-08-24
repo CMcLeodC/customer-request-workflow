@@ -97,3 +97,60 @@ def test_list_customer_requests():
     }
 
     assert customer_ids == {"connor1234", "alex5678"}
+
+
+def test_update_customer_request_status():
+    payload = {
+        "customer_id": "connor1234",
+        "requester_name": "connor_clements",
+        "requester_email": "connor@example.com",
+        "request_text": "I want to practice building APIs"
+        }
+
+    response = client.post("/requests", json=payload)
+
+    assert response.status_code == 201
+    assert isinstance(response.json()["id"], int)
+
+    request_id = response.json()["id"]
+
+    update_response = client.patch(f"/requests/{request_id}", json={"status": "reviewing"})
+    get_response = client.get(f"/requests/{request_id}")
+
+    assert update_response.status_code == 200
+    assert update_response.json()["id"] == request_id
+    assert update_response.json()["customer_id"] == payload["customer_id"]
+    assert update_response.json()["status"] == "reviewing"
+    assert get_response.status_code == 200
+    assert get_response.json()["status"] == "reviewing"
+
+
+def test_update_customer_request_with_invalid_status():
+    payload = {
+        "customer_id": "connor1234",
+        "requester_name": "connor_clements",
+        "requester_email": "connor@example.com",
+        "request_text": "I want to practice building APIs"
+        }
+
+    response = client.post("/requests", json=payload)
+
+    assert response.status_code == 201
+    assert isinstance(response.json()["id"], int)
+
+    request_id = response.json()["id"]
+
+    update_response = client.patch(f"/requests/{request_id}", json={"status": "banana"})
+
+    assert update_response.status_code == 422
+    assert update_response.json()["detail"][0]["loc"] == [
+        "body",
+        "status",
+    ]
+
+
+def test_update_customer_request_not_found():
+    update_response = client.patch("/requests/999", json={"status": "reviewing"})
+
+    assert update_response.status_code == 404
+    assert update_response.json() == {"detail": "Customer request not found"}

@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from app.schemas.customer_request import (
     CustomerRequestCreate,
     CustomerRequestRead,
+    CustomerRequestStatusUpdate
 )
 from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
@@ -51,3 +52,23 @@ def list_customer_requests(
     db: Session = Depends(get_db),
 ):
     return db.scalars(select(CustomerRequest)).all()
+
+
+@app.patch("/requests/{request_id}", response_model=CustomerRequestRead)
+def update_customer_request_status(
+    request_id: int,
+    status_update: CustomerRequestStatusUpdate,
+    db: Session = Depends(get_db),
+):
+    db_request = db.get(CustomerRequest, request_id)
+
+    if db_request is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Customer request not found",
+        )
+
+    db_request.status = status_update.status
+    db.commit()
+    db.refresh(db_request)
+    return db_request
