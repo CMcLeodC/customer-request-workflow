@@ -54,6 +54,16 @@ def list_customer_requests(
     return db.scalars(select(CustomerRequest)).all()
 
 
+ALLOWED_STATUS_TRANSITIONS = {
+    "new": {"reviewing", "rejected"},
+    "reviewing": {"approved", "rejected"},
+    "approved": {"in_progress"},
+    "in_progress": {"completed"},
+    "completed": set(),
+    "rejected": set()
+}
+
+
 @app.patch("/requests/{request_id}", response_model=CustomerRequestRead)
 def update_customer_request_status(
     request_id: int,
@@ -68,7 +78,20 @@ def update_customer_request_status(
             detail="Customer request not found",
         )
 
+    current_status = db_request.status
+    allowed_statuses = ALLOWED_STATUS_TRANSITIONS.get(current_status, set())
+
+    if status_update.status not in allowed_statuses:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"Cannot change status from "
+                f"{current_status} to {status_update.status}"
+            ),
+        )
+
     db_request.status = status_update.status
+
     db.commit()
     db.refresh(db_request)
     return db_request

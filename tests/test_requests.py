@@ -154,3 +154,56 @@ def test_update_customer_request_not_found():
 
     assert update_response.status_code == 404
     assert update_response.json() == {"detail": "Customer request not found"}
+
+
+def test_reject_invalid_status_transition():
+    payload = {
+        "customer_id": "connor1234",
+        "requester_name": "connor_clements",
+        "requester_email": "connor@example.com",
+        "request_text": "I want to practice building APIs"
+        }
+
+    response = client.post("/requests", json=payload)
+
+    assert response.status_code == 201
+    assert isinstance(response.json()["id"], int)
+
+    request_id = response.json()["id"]
+
+    update_status = client.patch(f"/requests/{request_id}", json={"status": "completed"})
+
+    assert update_status.status_code == 409
+    assert update_status.json() == {"detail": "Cannot change status from new to completed"}
+
+
+def test_complete_customer_request_workflow():
+    payload = {
+        "customer_id": "connor1234",
+        "requester_name": "connor_clements",
+        "requester_email": "connor@example.com",
+        "request_text": "I want to practice building APIs"
+    }
+
+    statuses = [
+        "reviewing",
+        "approved",
+        "in_progress",
+        "completed",
+    ]
+
+    response = client.post("/requests", json=payload)
+
+    assert response.status_code == 201
+    assert isinstance(response.json()["id"], int)
+
+    request_id = response.json()["id"]
+
+    for status in statuses:
+        update_response = client.patch(f"/requests/{request_id}", json={"status": status})
+        get_response = client.get(f"/requests/{request_id}")
+
+        assert update_response.status_code == 200
+        assert update_response.json()["status"] == status
+        assert get_response.status_code == 200
+        assert get_response.json()["status"] == status
