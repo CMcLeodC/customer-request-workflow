@@ -4,9 +4,11 @@ from app.schemas.customer_request import (
     CustomerRequestRead,
     CustomerRequestStatusUpdate
 )
+from app.schemas.request_analysis import RequestAnalysisRead
 from sqlalchemy.orm import Session
 from app.database import Base, engine, get_db
 from app.models.customer_request import CustomerRequest
+from app.models.request_analysis import RequestAnalysis
 from sqlalchemy import select
 
 Base.metadata.create_all(bind=engine)
@@ -95,3 +97,46 @@ def update_customer_request_status(
     db.commit()
     db.refresh(db_request)
     return db_request
+
+
+@app.post(
+    "/requests/{request_id}/analysis",
+    status_code=201,
+    response_model=RequestAnalysisRead,
+)
+def analyse_customer_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+):
+    db_request = db.get(CustomerRequest, request_id)
+
+    if db_request is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Customer request not found",
+        )
+
+    existing_analysis = db.scalar(
+        select(RequestAnalysis).where(
+            RequestAnalysis.customer_request_id == request_id
+        )
+    )
+
+    if existing_analysis is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Request analysis already exists",
+        )
+
+    analysis = RequestAnalysis(
+        customer_request_id=db_request.id,
+        summary=db_request.request_text,
+        category="other",
+        suggested_urgency=db_request.urgency,
+        implementation_notes="Manual review required",
+    )
+
+    db.add(analysis)
+    db.commit()
+    db.refresh(analysis)
+    return analysis
